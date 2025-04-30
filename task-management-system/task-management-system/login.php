@@ -2,6 +2,7 @@
 require_once "config/database.php";
 require_once "includes/functions.php";
 
+// Start session securely
 session_start_safe();
 
 // Check if the user is already logged in
@@ -21,6 +22,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (empty(trim($_POST["username"]))) {
         $username_err = "Please enter username.";
     } else {
+        // Keep using sanitize_input as defined in functions.php
         $username = sanitize_input($_POST["username"]);
     }
     
@@ -43,7 +45,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
     // Validate credentials
     if (empty($username_err) && empty($password_err) && empty($login_err)) {
-        // Prepare a select statement
+        // Prepare a select statement - this is already using prepared statements correctly
         $sql = "SELECT id, username, password FROM users WHERE username = ?";
         
         if ($stmt = $conn->prepare($sql)) {
@@ -64,8 +66,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $stmt->bind_result($id, $username, $hashed_password);
                     if ($stmt->fetch()) {
                         if (password_verify($password, $hashed_password)) {
-                            // Password is correct, so start a new session
-                            session_start();
+                            // Password is correct
+                            
+                            // Regenerate session ID to prevent session fixation
+                            session_regenerate_id(true);
                             
                             // Store data in session variables
                             $_SESSION["loggedin"] = true;
@@ -74,7 +78,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             
                             // Redirect user to welcome page
                             header("location: /task-management-system");
-                                exit;
+                            exit;
                         } else {
                             // Password is not valid
                             $login_err = "Invalid username or password.";
@@ -105,20 +109,20 @@ include "includes/header.php";
     
     <?php 
     if (!empty($login_err)) {
-        echo '<div class="alert alert-danger">' . $login_err . '</div>';
+        echo '<div class="alert alert-danger">' . htmlspecialchars($login_err) . '</div>';
     }        
     ?>
 
     <form id="login-form" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
         <div class="mb-3">
             <label for="username" class="form-label">Username</label>
-            <input type="text" name="username" id="username" class="form-control <?php echo (!empty($username_err)) ? 'is-invalid' : ''; ?>" value="<?php echo $username; ?>">
-            <span id="username-error" class="invalid-feedback"><?php echo $username_err; ?></span>
+            <input type="text" name="username" id="username" class="form-control <?php echo (!empty($username_err)) ? 'is-invalid' : ''; ?>" value="<?php echo htmlspecialchars($username); ?>">
+            <span id="username-error" class="invalid-feedback"><?php echo htmlspecialchars($username_err); ?></span>
         </div>    
         <div class="mb-3">
             <label for="password" class="form-label">Password</label>
             <input type="password" name="password" id="password" class="form-control <?php echo (!empty($password_err)) ? 'is-invalid' : ''; ?>">
-            <span id="password-error" class="invalid-feedback"><?php echo $password_err; ?></span>
+            <span id="password-error" class="invalid-feedback"><?php echo htmlspecialchars($password_err); ?></span>
         </div>
         <div class="mb-3">
             <div class="g-recaptcha" data-sitekey="6LfTMyArAAAAAPgGaCHZRyEaYQ4muiEd-eo04Q_f"></div>
