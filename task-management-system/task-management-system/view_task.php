@@ -1,6 +1,17 @@
 <?php
+/**
+ * Task Detail View Page
+ * 
+ * This file displays detailed information about a specific task.
+ * It includes task properties, status indicators, and action buttons.
+ * 
+ * @author Task Management System Team
+ * @version 1.0
+ */
+
 require_once "config/database.php";
 require_once "includes/functions.php";
+require_once "includes/db_functions.php"; // Include optimized database functions
 
 // Check if user is logged in
 redirect_if_not_logged_in();
@@ -19,32 +30,17 @@ $error_message = "";
 if (isset($_GET["notification"]) && !empty($_GET["notification"])) {
     $notification_id = $_GET["notification"];
     mark_notification_as_read($conn, $notification_id, $_SESSION["id"]);
+    
+    // Clear notification cache after marking as read
+    clear_query_cache();
 }
 
-// Get task details
-$sql = "SELECT t.*, c.name as category_name, c.color as category_color 
-        FROM tasks t 
-        LEFT JOIN categories c ON t.category_id = c.id 
-        WHERE t.id = ? AND t.user_id = ?";
+// Get task details using optimized function
+$task = get_task_by_id($conn, $task_id, $_SESSION["id"]);
 
-if ($stmt = $conn->prepare($sql)) {
-    $stmt->bind_param("ii", $task_id, $_SESSION["id"]);
-    
-    if ($stmt->execute()) {
-        $result = $stmt->get_result();
-        
-        if ($result->num_rows == 1) {
-            $task = $result->fetch_assoc();
-        } else {
-            $error_message = "Task not found.";
-        }
-    } else {
-        $error_message = "Oops! Something went wrong. Please try again later.";
-    }
-    
-    $stmt->close();
-} else {
-    $error_message = "Oops! Something went wrong. Please try again later.";
+// Handle database errors or task not found
+if ($task === null) {
+    $error_message = "Task not found or an error occurred.";
 }
 
 include "includes/header.php";
@@ -91,9 +87,9 @@ include "includes/header.php";
                 <div class="mb-3">
                     <strong>Due Date:</strong>
                     <?php 
+                        // Calculate days difference for due date styling and messaging
                         $due_date = strtotime($task['due_date']);
                         $today = strtotime(date('Y-m-d'));
-                        $tomorrow = strtotime('+1 day', $today);
                         $days_diff = round(($due_date - $today) / (60 * 60 * 24));
                         
                         $date_class = '';

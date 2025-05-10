@@ -1,6 +1,17 @@
 <?php
+/**
+ * Login Page
+ * 
+ * This file handles user authentication and login.
+ * It includes form validation, security checks, and session management.
+ * 
+ * @author Task Management System Team
+ * @version 1.0
+ */
+
 require_once "config/database.php";
 require_once "includes/functions.php";
+require_once "includes/db_functions.php"; // Include optimized database functions
 
 // Start session securely
 session_start_safe();
@@ -45,60 +56,34 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
     // Validate credentials
     if (empty($username_err) && empty($password_err) && empty($login_err)) {
-        // Prepare a select statement - this is already using prepared statements correctly
-        $sql = "SELECT id, username, password FROM users WHERE username = ?";
+        // Get user data using optimized function
+        $user = get_user_by_username($conn, $username);
         
-        if ($stmt = $conn->prepare($sql)) {
-            // Bind variables to the prepared statement as parameters
-            $stmt->bind_param("s", $param_username);
-            
-            // Set parameters
-            $param_username = $username;
-            
-            // Attempt to execute the prepared statement
-            if ($stmt->execute()) {
-                // Store result
-                $stmt->store_result();
+        if ($user) {
+            // Verify password
+            if (password_verify($password, $user['password'])) {
+                // Password is correct
                 
-                // Check if username exists, if yes then verify password
-                if ($stmt->num_rows == 1) {                    
-                    // Bind result variables
-                    $stmt->bind_result($id, $username, $hashed_password);
-                    if ($stmt->fetch()) {
-                        if (password_verify($password, $hashed_password)) {
-                            // Password is correct
-                            
-                            // Regenerate session ID to prevent session fixation
-                            session_regenerate_id(true);
-                            
-                            // Store data in session variables
-                            $_SESSION["loggedin"] = true;
-                            $_SESSION["id"] = $id;
-                            $_SESSION["username"] = $username;                            
-                            
-                            // Redirect user to welcome page
-                            header("location: /task-management-system");
-                            exit;
-                        } else {
-                            // Password is not valid
-                            $login_err = "Invalid username or password.";
-                        }
-                    }
-                } else {
-                    // Username doesn't exist
-                    $login_err = "Invalid username or password.";
-                }
+                // Regenerate session ID to prevent session fixation
+                session_regenerate_id(true);
+                
+                // Store data in session variables
+                $_SESSION["loggedin"] = true;
+                $_SESSION["id"] = $user['id'];
+                $_SESSION["username"] = $user['username'];                            
+                
+                // Redirect user to welcome page
+                header("location: /task-management-system");
+                exit;
             } else {
-                $login_err = "Oops! Something went wrong. Please try again later.";
+                // Password is not valid
+                $login_err = "Invalid username or password.";
             }
-
-            // Close statement
-            $stmt->close();
+        } else {
+            // Username doesn't exist
+            $login_err = "Invalid username or password.";
         }
     }
-    
-    // Close connection
-    $conn->close();
 }
 
 include "includes/header.php";
