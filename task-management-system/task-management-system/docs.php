@@ -68,7 +68,7 @@ include "includes/header.php";
             <h5><i class="bi bi-info-circle"></i> Need Help?</h5>
             <p>If you can't find the information you need in our documentation, please contact our support team:</p>
             <ul>
-                <li>Email: supportt@taskmanagement.com</li>
+                <li>Email: support@taskmanagement.com</li>
                 <li>Phone: 1-800-TASKS</li>
                 <li>Hours: Monday-Friday, 9 AM - 5 PM EST</li>
             </ul>
