@@ -1,8 +1,30 @@
 <?php
+/**
+ * Dashboard/Home Page
+ * 
+ * This file displays the dashboard with task statistics and quick links.
+ * It serves as the main landing page for both logged-in and guest users.
+ * 
+ * @author Task Management System Team
+ * @version 1.0
+ */
+
 require_once "config/database.php";
 require_once "includes/functions.php";
+require_once "includes/db_functions.php"; // Include optimized database functions
 
 session_start_safe();
+
+// Get task statistics if user is logged in
+if (is_logged_in()) {
+    // Get task counts by status using optimized function
+    $task_counts = get_task_counts_by_status($conn, $_SESSION["id"]);
+    
+    $pending = $task_counts['pending'];
+    $in_progress = $task_counts['in_progress'];
+    $completed = $task_counts['completed'];
+    $total = $task_counts['total'];
+}
 
 include "includes/header.php";
 ?>
@@ -44,31 +66,6 @@ include "includes/header.php";
                         </div>
                     </div>
                 </div>
-                
-                <?php
-                // Get task statistics
-                $pending = $in_progress = $completed = 0;
-                
-                $sql = "SELECT status, COUNT(*) as count FROM tasks WHERE user_id = ? GROUP BY status";
-                if ($stmt = $conn->prepare($sql)) {
-                    $stmt->bind_param("i", $_SESSION["id"]);
-                    if ($stmt->execute()) {
-                        $result = $stmt->get_result();
-                        while ($row = $result->fetch_assoc()) {
-                            if ($row["status"] == "pending") {
-                                $pending = $row["count"];
-                            } elseif ($row["status"] == "in_progress") {
-                                $in_progress = $row["count"];
-                            } elseif ($row["status"] == "completed") {
-                                $completed = $row["count"];
-                            }
-                        }
-                    }
-                    $stmt->close();
-                }
-                
-                $total = $pending + $in_progress + $completed;
-                ?>
                 
                 <?php if ($total > 0): ?>
                     <div class="row mt-5">

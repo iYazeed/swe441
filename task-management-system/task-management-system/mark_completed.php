@@ -1,6 +1,17 @@
 <?php
+/**
+ * Mark Task as Completed
+ * 
+ * This file handles the action of marking a task as completed.
+ * It updates the task status in the database and redirects back to the task view.
+ * 
+ * @author Task Management System Team
+ * @version 1.0
+ */
+
 require_once "config/database.php";
 require_once "includes/functions.php";
+require_once "includes/db_functions.php"; // Include optimized database functions
 
 // Check if user is logged in
 redirect_if_not_logged_in();
@@ -15,20 +26,10 @@ $task_id = $_POST["id"];
 $success = false;
 $error_message = "";
 
-// Update task status to completed
-$sql = "UPDATE tasks SET status = 'completed' WHERE id = ? AND user_id = ?";
+// Update task status using optimized function
+$success = update_task_status($conn, $task_id, 'completed', $_SESSION["id"]);
 
-if ($stmt = $conn->prepare($sql)) {
-    $stmt->bind_param("ii", $task_id, $_SESSION["id"]);
-    
-    if ($stmt->execute()) {
-        $success = true;
-    } else {
-        $error_message = "Oops! Something went wrong. Please try again later.";
-    }
-    
-    $stmt->close();
-} else {
+if (!$success) {
     $error_message = "Oops! Something went wrong. Please try again later.";
 }
 

@@ -1,12 +1,23 @@
 <?php
+/**
+ * Notifications Page
+ * 
+ * This file displays all notifications for the logged-in user.
+ * It includes options to view task details and mark notifications as read.
+ * 
+ * @author Task Management System Team
+ * @version 1.0
+ */
+
 require_once "config/database.php";
 require_once "includes/functions.php";
+require_once "includes/db_functions.php"; // Include optimized database functions
 
 // Check if user is logged in
 redirect_if_not_logged_in();
 
-// Get all notifications for the users
-$notifications = get_user_notifications($conn, $_SESSION["id"], 50);
+// Get all notifications for the user using optimized function
+$notifications = get_user_notifications_optimized($conn, $_SESSION["id"], 50);
 
 include "includes/header.php";
 ?>

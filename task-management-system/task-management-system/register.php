@@ -1,6 +1,17 @@
 <?php
+/**
+ * Registration Page
+ * 
+ * This file handles user registration.
+ * It includes form validation, security checks, and database operations.
+ * 
+ * @author Task Management System Team
+ * @version 1.0
+ */
+
 require_once "config/database.php";
 require_once "includes/functions.php";
+require_once "includes/db_functions.php"; // Include optimized database functions
 
 session_start_safe();
 
@@ -23,32 +34,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } elseif (!preg_match('/^[a-zA-Z0-9_]+$/', trim($_POST["username"]))) {
         $username_err = "Username can only contain letters, numbers, and underscores.";
     } else {
-        // Prepare a select statement
-        $sql = "SELECT id FROM users WHERE username = ?";
+        $username = sanitize_input($_POST["username"]);
         
-        if ($stmt = $conn->prepare($sql)) {
-            // Bind variables to the prepared statement as parameters
-            $stmt->bind_param("s", $param_username);
-            
-            // Set parameters
-            $param_username = trim($_POST["username"]);
-            
-            // Attempt to execute the prepared statement
-            if ($stmt->execute()) {
-                // Store result
-                $stmt->store_result();
-                
-                if ($stmt->num_rows == 1) {
-                    $username_err = "This username is already taken.";
-                } else {
-                    $username = sanitize_input($_POST["username"]);
-                }
-            } else {
-                echo "Oops! Something went wrong. Please try again later.";
-            }
-
-            // Close statement
-            $stmt->close();
+        // Check if username exists using optimized function
+        if (user_exists($conn, $username)) {
+            $username_err = "This username is already taken.";
         }
     }
     
@@ -68,32 +58,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } elseif (!filter_var(trim($_POST["email"]), FILTER_VALIDATE_EMAIL)) {
         $email_err = "Please enter a valid email address.";
     } else {
-        // Prepare a select statement
-        $sql = "SELECT id FROM users WHERE email = ?";
+        $email = sanitize_input($_POST["email"]);
         
-        if ($stmt = $conn->prepare($sql)) {
-            // Bind variables to the prepared statement as parameters
-            $stmt->bind_param("s", $param_email);
-            
-            // Set parameters
-            $param_email = trim($_POST["email"]);
-            
-            // Attempt to execute the prepared statement
-            if ($stmt->execute()) {
-                // Store result
-                $stmt->store_result();
-                
-                if ($stmt->num_rows == 1) {
-                    $email_err = "This email is already registered.";
-                } else {
-                    $email = sanitize_input($_POST["email"]);
-                }
-            } else {
-                echo "Oops! Something went wrong. Please try again later.";
-            }
-
-            // Close statement
-            $stmt->close();
+        // Check if email exists using optimized function
+        if (email_exists($conn, $email)) {
+            $email_err = "This email is already registered.";
         }
     }
     
@@ -135,6 +104,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if ($stmt->execute()) {
                 // Redirect to login page
                 header("location: login.php");
+                exit();
             } else {
                 echo "Oops! Something went wrong. Please try again later.";
             }
@@ -143,9 +113,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $stmt->close();
         }
     }
-    
-    // Close connection
-    $conn->close();
 }
 
 include "includes/header.php";

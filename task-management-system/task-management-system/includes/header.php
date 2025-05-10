@@ -1,13 +1,60 @@
 <?php
+/**
+ * Header Template
+ * 
+ * This file contains the header section that appears on all pages.
+ * It includes the HTML head, navigation bar, and notification system.
+ * 
+ * @author Task Management System Team
+ * @version 1.0
+ */
+
 require_once __DIR__ . "/../config/database.php";
 require_once __DIR__ . "/functions.php";
+require_once __DIR__ . "/../includes/db_functions.php"; // Include optimized database functions
 session_start_safe();
 
 // Check for due date notifications if user is logged in
 if (is_logged_in()) {
-    check_due_date_notifications($conn, $_SESSION["id"]);
-    $unread_notifications_count = get_unread_notifications_count($conn, $_SESSION["id"]);
-    $notifications = get_user_notifications($conn, $_SESSION["id"], 5);
+    // Get tasks requiring notifications
+    $tasks_requiring_notifications = check_tasks_requiring_notifications($conn, $_SESSION["id"]);
+    
+    // Create notifications in bulk if needed
+    if (!empty($tasks_requiring_notifications)) {
+        $notifications_to_create = [];
+        $today = date('Y-m-d');
+        
+        foreach ($tasks_requiring_notifications as $task) {
+            if ($task['notification_type'] == 'upcoming') {
+                $days_until = (strtotime($task['due_date']) - strtotime($today)) / (60 * 60 * 24);
+                $days_text = $days_until <= 1 ? "tomorrow" : "in 2 days";
+                
+                $message = "Task \"" . $task['title'] . "\" is due " . $days_text . " (" . date('M d, Y', strtotime($task['due_date'])) . ").";
+            } else { // overdue
+                $days_overdue = (strtotime($today) - strtotime($task['due_date'])) / (60 * 60 * 24);
+                $days_text = $days_overdue <= 1 ? "today" : $days_overdue . " days ago";
+                
+                $message = "Task \"" . $task['title'] . "\" was due " . $days_text . " (" . date('M d, Y', strtotime($task['due_date'])) . ").";
+            }
+            
+            $notifications_to_create[] = [
+                'user_id' => $_SESSION["id"],
+                'task_id' => $task['id'],
+                'message' => $message,
+                'type' => $task['notification_type']
+            ];
+        }
+        
+        if (!empty($notifications_to_create)) {
+            create_notifications_bulk($conn, $notifications_to_create);
+        }
+    }
+    
+    // Get unread notifications count using optimized function
+    $unread_notifications_count = get_unread_notifications_count_optimized($conn, $_SESSION["id"]);
+    
+    // Get recent notifications using optimized function
+    $notifications = get_user_notifications_optimized($conn, $_SESSION["id"], 5);
 }
 ?>
 <!DOCTYPE html>

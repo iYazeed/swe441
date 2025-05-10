@@ -1,6 +1,17 @@
 <?php
+/**
+ * Task List Page
+ * 
+ * This file displays all tasks for the logged-in user with filtering options.
+ * It includes category and status filters, and displays tasks in a card layout.
+ * 
+ * @author Task Management System Team
+ * @version 1.0
+ */
+
 require_once "config/database.php";
 require_once "includes/functions.php";
+require_once "includes/db_functions.php"; // Include optimized database functions
 
 // Check if user is logged in
 redirect_if_not_logged_in();
@@ -8,61 +19,19 @@ redirect_if_not_logged_in();
 // Define variables
 $tasks = [];
 $error_message = "";
-$filter_category = isset($_GET['category']) ? $_GET['category'] : '';
-$filter_status = isset($_GET['status']) ? $_GET['status'] : '';
+$filter_category = isset($_GET['category']) ? $_GET['category'] : null;
+$filter_status = isset($_GET['status']) ? $_GET['status'] : null;
 
-// Get user categories
-$categories = get_user_categories($conn, $_SESSION["id"]);
+// Get user categories using optimized function
+$categories = get_user_categories_optimized($conn, $_SESSION["id"]);
 
-// Build the SQL query with filters
-$sql = "SELECT t.id, t.title, t.description, t.status, t.due_date, t.created_at, t.category_id, 
-               c.name as category_name, c.color as category_color 
-        FROM tasks t 
-        LEFT JOIN categories c ON t.category_id = c.id 
-        WHERE t.user_id = ?";
+// Get tasks using optimized function with filters
+$tasks = get_user_tasks($conn, $_SESSION["id"], $filter_category, $filter_status);
 
-$params = [$_SESSION["id"]];
-$types = "i";
-
-// Add category filter if specified
-if (!empty($filter_category)) {
-    $sql .= " AND t.category_id = ?";
-    $params[] = $filter_category;
-    $types .= "i";
-}
-
-// Add status filter if specified
-if (!empty($filter_status)) {
-    $sql .= " AND t.status = ?";
-    $params[] = $filter_status;
-    $types .= "s";
-}
-
-// Add order by clause
-$sql .= " ORDER BY t.due_date ASC, t.created_at DESC";
-
-if ($stmt = $conn->prepare($sql)) {
-    // Bind variables to the prepared statement as parameters
-    $stmt->bind_param($types, ...$params);
-    
-    // Attempt to execute the prepared statement
-    if ($stmt->execute()) {
-        $result = $stmt->get_result();
-        
-        // Check if any tasks exist
-        if ($result->num_rows > 0) {
-            while ($row = $result->fetch_assoc()) {
-                $tasks[] = $row;
-            }
-        }
-    } else {
-        $error_message = "Oops! Something went wrong. Please try again later.";
-    }
-    
-    // Close statement
-    $stmt->close();
-} else {
+// Handle database errors
+if ($tasks === null) {
     $error_message = "Oops! Something went wrong. Please try again later.";
+    $tasks = [];
 }
 
 include "includes/header.php";
@@ -177,9 +146,9 @@ include "includes/header.php";
                             </span>
                             <?php if (!empty($task['due_date'])): ?>
                                 <?php 
+                                    // Calculate days difference for due date styling
                                     $due_date = strtotime($task['due_date']);
                                     $today = strtotime(date('Y-m-d'));
-                                    $tomorrow = strtotime('+1 day', $today);
                                     $days_diff = round(($due_date - $today) / (60 * 60 * 24));
                                     
                                     $date_class = 'text-muted';
