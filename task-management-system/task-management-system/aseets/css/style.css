@@ -1,42 +1,102 @@
 .task-card {
     margin-bottom: 20px;
     transition: transform 0.3s;
-}
-
-.task-card:hover {
+  }
+  
+  .task-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-}
-
-.status-pending {
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  }
+  
+  .status-pending {
     background-color: #fff3cd;
     border-left: 5px solid #ffc107;
-}
-
-.status-in_progress {
+  }
+  
+  .status-in_progress {
     background-color: #cfe2ff;
     border-left: 5px solid #0d6efd;
-}
-
-.status-completed {
+  }
+  
+  .status-completed {
     background-color: #d1e7dd;
     border-left: 5px solid #198754;
-}
-
-.form-container {
+  }
+  
+  .form-container {
     max-width: 600px;
     margin: 0 auto;
     padding: 20px;
     background-color: #f8f9fa;
     border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-}
-
-.auth-container {
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .auth-container {
     max-width: 400px;
     margin: 50px auto;
     padding: 20px;
     background-color: #f8f9fa;
     border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-}
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Category styles */
+  .category-badge {
+    display: inline-block;
+    padding: 0.25em 0.6em;
+    font-size: 75%;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 0.25rem;
+    color: #fff;
+  }
+  
+  .category-filter {
+    margin-bottom: 20px;
+  }
+  
+  .category-filter .btn {
+    margin-right: 5px;
+    margin-bottom: 5px;
+  }
+  
+  .category-filter .btn.active {
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  }
+  
+  .category-color-preview {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    margin-right: 5px;
+    vertical-align: middle;
+  }
+  
+  .category-management {
+    margin-top: 30px;
+  }
+  
+  .category-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    margin-bottom: 5px;
+    border-radius: 5px;
+    background-color: #f8f9fa;
+  }
+  
+  .category-item:hover {
+    background-color: #e9ecef;
+  }
+  
+  .category-actions {
+    display: flex;
+    gap: 5px;
+  }
+  

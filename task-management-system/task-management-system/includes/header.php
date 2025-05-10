@@ -30,6 +30,9 @@ session_start_safe();
                             <a class="nav-link" href="create.php">Create Task</a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link" href="categories.php">Categories</a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="logout.php">Logout</a>
                         </li>
                     <?php else: ?>

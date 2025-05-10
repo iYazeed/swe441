@@ -12,8 +12,11 @@ if ($conn->connect_error) {
 }
 
 // Define variables and initialize with empty values
-$title = $description = $status = $due_date = "";
-$title_err = $description_err = $status_err = $due_date_err = $general_err = "";
+$title = $description = $status = $due_date = $category_id = "";
+$title_err = $description_err = $status_err = $due_date_err = $category_err = $general_err = "";
+
+// Get user categories
+$categories = get_user_categories($conn, $_SESSION["id"]);
 
 // Processing form data when form is submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -46,21 +49,40 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
     
+    // Validate category (optional)
+    if (!empty($_POST["category_id"])) {
+        $category_id = sanitize_input($_POST["category_id"]);
+        
+        // Check if category exists and belongs to user
+        $category_exists = false;
+        foreach ($categories as $category) {
+            if ($category["id"] == $category_id) {
+                $category_exists = true;
+                break;
+            }
+        }
+        
+        if (!$category_exists) {
+            $category_err = "Invalid category selected.";
+        }
+    }
+    
     // Check input errors before inserting in database
-    if (empty($title_err) && empty($status_err) && empty($due_date_err)) {
+    if (empty($title_err) && empty($status_err) && empty($due_date_err) && empty($category_err)) {
         try {
             // Prepare an insert statement
-            $sql = "INSERT INTO tasks (title, description, status, due_date, user_id) VALUES (?, ?, ?, ?, ?)";
+            $sql = "INSERT INTO tasks (title, description, status, due_date, category_id, user_id) VALUES (?, ?, ?, ?, ?, ?)";
              
             if ($stmt = $conn->prepare($sql)) {
                 // Bind variables to the prepared statement as parameters
-                $stmt->bind_param("ssssi", $param_title, $param_description, $param_status, $param_due_date, $param_user_id);
+                $stmt->bind_param("ssssii", $param_title, $param_description, $param_status, $param_due_date, $param_category_id, $param_user_id);
                 
                 // Set parameters
                 $param_title = $title;
                 $param_description = $description;
                 $param_status = $status;
                 $param_due_date = $due_date;
+                $param_category_id = !empty($category_id) ? $category_id : NULL;
                 $param_user_id = $_SESSION["id"];
                 
                 // Attempt to execute the prepared statement
@@ -108,6 +130,23 @@ include "includes/header.php";
                     <div class="mb-3">
                         <label for="description" class="form-label">Description</label>
                         <textarea name="description" id="description" class="form-control" rows="4"><?php echo $description; ?></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="category_id" class="form-label">Category</label>
+                        <select name="category_id" id="category_id" class="form-select <?php echo (!empty($category_err)) ? 'is-invalid' : ''; ?>">
+                            <option value="">-- Select Category (Optional) --</option>
+                            <?php foreach ($categories as $category): ?>
+                                <option value="<?php echo $category['id']; ?>" <?php echo ($category_id == $category['id']) ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($category['name']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <span class="invalid-feedback"><?php echo $category_err; ?></span>
+                        <div class="mt-1">
+                            <a href="categories.php" class="text-decoration-none">
+                                <small>Manage Categories</small>
+                            </a>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label for="status" class="form-label">Status</label>
