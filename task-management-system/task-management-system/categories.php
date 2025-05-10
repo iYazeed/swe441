@@ -1,4 +1,14 @@
 <?php
+/**
+ * Categories Management Page
+ * 
+ * This file handles the creation, editing, and deletion of task categories.
+ * It includes form validation, database operations, and error handling for category management.
+ * 
+ * @author Task Management System Team
+ * @version 1.0
+ */
+
 require_once "config/database.php";
 require_once "includes/functions.php";
 
@@ -345,6 +355,12 @@ include "includes/header.php";
 </div>
 
 <script>
+/**
+ * Category Management JavaScript
+ * 
+ * This script handles the client-side functionality for category management,
+ * including color previews and modal data population.
+ */
 document.addEventListener('DOMContentLoaded', function() {
     // Color preview for add form
     const colorInput = document.getElementById('color');

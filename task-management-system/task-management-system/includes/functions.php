@@ -1,18 +1,46 @@
 <?php
-// Start session if not already started
+// Add comprehensive file header comment at the top of the file
+/**
+ * Functions Library
+ * 
+ * This file contains core functions used throughout the Task Management System.
+ * It includes utilities for session management, user authentication, input sanitization,
+ * error handling, database operations, and notification management.
+ * 
+ * @author Task Management System Team
+ * @version 1.0
+ */
+
+// Improve comments for each function to include parameter and return value documentation
+/**
+ * Start session if not already started
+ * Prevents session_start() errors when called multiple times
+ * 
+ * @return void
+ */
 function session_start_safe() {
     if (session_status() == PHP_SESSION_NONE) {
         session_start();
     }
 }
 
-// Check if user is logged in
+/**
+ * Check if user is logged in
+ * Verifies if the user session exists and is valid
+ * 
+ * @return bool True if user is logged in, false otherwise
+ */
 function is_logged_in() {
     session_start_safe();
     return isset($_SESSION["loggedin"]) && $_SESSION["loggedin"] === true;
 }
 
-// Redirect to login page if not logged in
+/**
+ * Redirect to login page if user is not logged in
+ * Used for protecting pages that require authentication
+ * 
+ * @return void
+ */
 function redirect_if_not_logged_in() {
     if (!is_logged_in()) {
         header("location: /auth/login.php");
@@ -20,7 +48,13 @@ function redirect_if_not_logged_in() {
     }
 }
 
-// Sanitize input data
+/**
+ * Sanitize input data to prevent XSS and injection attacks
+ * Trims whitespace, removes slashes, and converts special characters to HTML entities
+ * 
+ * @param string $data The input data to sanitize
+ * @return string Sanitized data
+ */
 function sanitize_input($data) {
     $data = trim($data);
     $data = stripslashes($data);
@@ -28,17 +62,33 @@ function sanitize_input($data) {
     return $data;
 }
 
-// Display error message
+/**
+ * Display error message with consistent styling
+ * 
+ * @param string $message The error message to display
+ * @return void
+ */
 function display_error($message) {
     echo '<div class="alert alert-danger">' . $message . '</div>';
 }
 
-// Display success message
+/**
+ * Display success message with consistent styling
+ * 
+ * @param string $message The success message to display
+ * @return void
+ */
 function display_success($message) {
     echo '<div class="alert alert-success">' . $message . '</div>';
 }
 
-// Verify Google reCAPTCHA token
+/**
+ * Verify Google reCAPTCHA token
+ * Sends a request to Google's reCAPTCHA API to verify the token
+ * 
+ * @param string $token The reCAPTCHA token to verify
+ * @return bool True if verification successful, false otherwise
+ */
 function verify_captcha($token) {
     $secret = "6LfTMyArAAAAADCE0uDPm3kDcze8jI4adO8Tec9O"; 
     
@@ -63,9 +113,10 @@ function verify_captcha($token) {
     return $responseData->success;
 }
 
-// Add a new function for logging errors
 /**
  * Log error to file
+ * Creates a timestamped error log entry in the logs directory
+ * 
  * @param string $message Error message
  * @param string $file File where error occurred
  * @param int $line Line number where error occurred
@@ -98,12 +149,13 @@ function log_error($message, $file = '', $line = 0) {
     error_log($log_message, 3, $log_file);
 }
 
-// Add a function to handle database errors
 /**
  * Handle database error
+ * Logs database errors and returns a user-friendly message
+ * 
  * @param mysqli $conn Database connection
  * @param string $query SQL query that failed (optional)
- * @return string Error message
+ * @return string User-friendly error message
  */
 function handle_db_error($conn, $query = '') {
     $error = $conn->error;
@@ -123,6 +175,8 @@ function handle_db_error($conn, $query = '') {
 
 /**
  * Get user categories
+ * Retrieves all categories belonging to a specific user
+ * 
  * @param mysqli $conn Database connection
  * @param int $user_id User ID
  * @return array Categories array or empty array on error
@@ -155,6 +209,8 @@ function get_user_categories($conn, $user_id) {
 
 /**
  * Get category name by ID
+ * Retrieves a single category by its ID
+ * 
  * @param mysqli $conn Database connection
  * @param int $category_id Category ID
  * @return array|null Category data or null if not found
@@ -187,6 +243,8 @@ function get_category_by_id($conn, $category_id) {
 
 /**
  * Check for tasks with upcoming due dates and create notifications
+ * Generates notifications for tasks due soon or overdue
+ * 
  * @param mysqli $conn Database connection
  * @param int $user_id User ID
  * @return void
@@ -256,6 +314,8 @@ function check_due_date_notifications($conn, $user_id) {
 
 /**
  * Create a notification
+ * Inserts a new notification into the database
+ * 
  * @param mysqli $conn Database connection
  * @param int $user_id User ID
  * @param int $task_id Task ID
@@ -280,6 +340,8 @@ function create_notification($conn, $user_id, $task_id, $message, $type) {
 
 /**
  * Get unread notifications count for a user
+ * Counts notifications that haven't been marked as read
+ * 
  * @param mysqli $conn Database connection
  * @param int $user_id User ID
  * @return int Number of unread notifications
@@ -306,6 +368,8 @@ function get_unread_notifications_count($conn, $user_id) {
 
 /**
  * Get notifications for a user
+ * Retrieves notifications with associated task information
+ * 
  * @param mysqli $conn Database connection
  * @param int $user_id User ID
  * @param int $limit Maximum number of notifications to return (optional)
@@ -340,6 +404,8 @@ function get_user_notifications($conn, $user_id, $limit = 10) {
 
 /**
  * Mark notification as read
+ * Updates a notification's read status
+ * 
  * @param mysqli $conn Database connection
  * @param int $notification_id Notification ID
  * @param int $user_id User ID (for security)
@@ -362,6 +428,8 @@ function mark_notification_as_read($conn, $notification_id, $user_id) {
 
 /**
  * Mark all notifications as read for a user
+ * Updates all unread notifications to read status
+ * 
  * @param mysqli $conn Database connection
  * @param int $user_id User ID
  * @return bool Success or failure

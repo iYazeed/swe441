@@ -1,4 +1,14 @@
 <?php
+/**
+ * Task List Page
+ * 
+ * This file displays all tasks for the logged-in user with filtering options.
+ * It includes category and status filters, and displays tasks in a card layout.
+ * 
+ * @author Task Management System Team
+ * @version 1.0
+ */
+
 require_once "config/database.php";
 require_once "includes/functions.php";
 
@@ -177,6 +187,7 @@ include "includes/header.php";
                             </span>
                             <?php if (!empty($task['due_date'])): ?>
                                 <?php 
+                                    // Calculate days difference for due date styling
                                     $due_date = strtotime($task['due_date']);
                                     $today = strtotime(date('Y-m-d'));
                                     $tomorrow = strtotime('+1 day', $today);

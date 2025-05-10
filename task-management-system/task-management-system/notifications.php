@@ -1,4 +1,14 @@
 <?php
+/**
+ * Notifications Page
+ * 
+ * This file displays all notifications for the logged-in user.
+ * It includes options to view task details and mark notifications as read.
+ * 
+ * @author Task Management System Team
+ * @version 1.0
+ */
+
 require_once "config/database.php";
 require_once "includes/functions.php";
 

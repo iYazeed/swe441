@@ -1,4 +1,14 @@
 <?php
+/**
+ * Task Creation Page
+ * 
+ * This file handles the creation of new tasks. It includes form validation,
+ * database operations, and error handling for the task creation process.
+ * 
+ * @author Task Management System Team
+ * @version 1.0
+ */
+
 require_once "config/database.php";
 require_once "includes/functions.php";
 
