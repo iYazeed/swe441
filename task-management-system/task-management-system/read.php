@@ -154,7 +154,9 @@ include "includes/header.php";
                                 <i class="bi bi-three-dots"></i>
                             </button>
                             <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton<?php echo $task['id']; ?>">
+                                <li><a class="dropdown-item" href="view_task.php?id=<?php echo $task['id']; ?>">View Details</a></li>
                                 <li><a class="dropdown-item" href="update.php?id=<?php echo $task['id']; ?>">Edit</a></li>
+                                <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="delete.php?id=<?php echo $task['id']; ?>" onclick="return confirm('Are you sure you want to delete this task?')">Delete</a></li>
                             </ul>
                         </div>
@@ -174,12 +176,44 @@ include "includes/header.php";
                                 <?php echo ucfirst(str_replace('_', ' ', $task['status'])); ?>
                             </span>
                             <?php if (!empty($task['due_date'])): ?>
-                                <small class="text-muted">Due: <?php echo date('M d, Y', strtotime($task['due_date'])); ?></small>
+                                <?php 
+                                    $due_date = strtotime($task['due_date']);
+                                    $today = strtotime(date('Y-m-d'));
+                                    $tomorrow = strtotime('+1 day', $today);
+                                    $days_diff = round(($due_date - $today) / (60 * 60 * 24));
+                                    
+                                    $date_class = 'text-muted';
+                                    if ($days_diff < 0 && $task['status'] != 'completed') {
+                                        $date_class = 'due-date-warning';
+                                    } elseif ($days_diff == 0 && $task['status'] != 'completed') {
+                                        $date_class = 'due-date-today';
+                                    } elseif ($days_diff <= 2 && $task['status'] != 'completed') {
+                                        $date_class = 'due-date-upcoming';
+                                    }
+                                ?>
+                                <small class="<?php echo $date_class; ?>">
+                                    Due: <?php echo date('M d, Y', $due_date); ?>
+                                    <?php if ($days_diff < 0 && $task['status'] != 'completed'): ?>
+                                        <i class="bi bi-exclamation-triangle-fill ms-1" title="Overdue"></i>
+                                    <?php elseif ($days_diff == 0 && $task['status'] != 'completed'): ?>
+                                        <i class="bi bi-exclamation-circle-fill ms-1" title="Due today"></i>
+                                    <?php elseif ($days_diff <= 2 && $task['status'] != 'completed'): ?>
+                                        <i class="bi bi-clock-fill ms-1" title="Due soon"></i>
+                                    <?php endif; ?>
+                                </small>
                             <?php endif; ?>
                         </div>
                     </div>
                     <div class="card-footer text-muted">
-                        <small>Created: <?php echo date('M d, Y', strtotime($task['created_at'])); ?></small>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small>Created: <?php echo date('M d, Y', strtotime($task['created_at'])); ?></small>
+                            <?php if ($task['status'] != 'completed'): ?>
+                                <form action="mark_completed.php" method="post" class="d-inline">
+                                    <input type="hidden" name="id" value="<?php echo $task['id']; ?>">
+                                    <button type="submit" class="btn btn-sm btn-outline-success">Complete</button>
+                                </form>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
             </div>
