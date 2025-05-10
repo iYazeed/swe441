@@ -62,4 +62,62 @@ function verify_captcha($token) {
     $responseData = json_decode($response);
     return $responseData->success;
 }
+
+// Add a new function for logging errors
+/**
+ * Log error to file
+ * @param string $message Error message
+ * @param string $file File where error occurred
+ * @param int $line Line number where error occurred
+ * @return void
+ */
+function log_error($message, $file = '', $line = 0) {
+    $log_file = __DIR__ . '/../logs/error.log';
+    $log_dir = dirname($log_file);
+    
+    // Create logs directory if it doesn't exist
+    if (!file_exists($log_dir)) {
+        mkdir($log_dir, 0755, true);
+    }
+    
+    // Format the error message
+    $timestamp = date('Y-m-d H:i:s');
+    $log_message = "[$timestamp] $message";
+    
+    if (!empty($file)) {
+        $log_message .= " in $file";
+        
+        if ($line > 0) {
+            $log_message .= " on line $line";
+        }
+    }
+    
+    $log_message .= PHP_EOL;
+    
+    // Write to log file
+    error_log($log_message, 3, $log_file);
+}
+
+// Add a function to handle database errors
+/**
+ * Handle database error
+ * @param mysqli $conn Database connection
+ * @param string $query SQL query that failed (optional)
+ * @return string Error message
+ */
+function handle_db_error($conn, $query = '') {
+    $error = $conn->error;
+    $errno = $conn->errno;
+    
+    // Log the error
+    $message = "Database error #$errno: $error";
+    if (!empty($query)) {
+        $message .= " | Query: $query";
+    }
+    
+    log_error($message, debug_backtrace()[0]['file'], debug_backtrace()[0]['line']);
+    
+    // Return user-friendly message
+    return "A database error occurred. Please try again later.";
+}
 ?>
