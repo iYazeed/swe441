@@ -120,4 +120,68 @@ function handle_db_error($conn, $query = '') {
     // Return user-friendly message
     return "A database error occurred. Please try again later.";
 }
+
+/**
+ * Get user categories
+ * @param mysqli $conn Database connection
+ * @param int $user_id User ID
+ * @return array Categories array or empty array on error
+ */
+function get_user_categories($conn, $user_id) {
+    $categories = [];
+    
+    $sql = "SELECT id, name, color FROM categories WHERE user_id = ? ORDER BY name ASC";
+    
+    if ($stmt = $conn->prepare($sql)) {
+        $stmt->bind_param("i", $user_id);
+        
+        if ($stmt->execute()) {
+            $result = $stmt->get_result();
+            
+            while ($row = $result->fetch_assoc()) {
+                $categories[] = $row;
+            }
+        } else {
+            log_error("Failed to get categories: " . $conn->error);
+        }
+        
+        $stmt->close();
+    } else {
+        log_error("Failed to prepare category query: " . $conn->error);
+    }
+    
+    return $categories;
+}
+
+/**
+ * Get category name by ID
+ * @param mysqli $conn Database connection
+ * @param int $category_id Category ID
+ * @return array|null Category data or null if not found
+ */
+function get_category_by_id($conn, $category_id) {
+    if (empty($category_id)) {
+        return null;
+    }
+    
+    $sql = "SELECT id, name, color FROM categories WHERE id = ?";
+    
+    if ($stmt = $conn->prepare($sql)) {
+        $stmt->bind_param("i", $category_id);
+        
+        if ($stmt->execute()) {
+            $result = $stmt->get_result();
+            
+            if ($result->num_rows == 1) {
+                $category = $result->fetch_assoc();
+                $stmt->close();
+                return $category;
+            }
+        }
+        
+        $stmt->close();
+    }
+    
+    return null;
+}
 ?>

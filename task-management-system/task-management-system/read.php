@@ -8,16 +8,42 @@ redirect_if_not_logged_in();
 // Define variables
 $tasks = [];
 $error_message = "";
+$filter_category = isset($_GET['category']) ? $_GET['category'] : '';
+$filter_status = isset($_GET['status']) ? $_GET['status'] : '';
 
-// Get tasks for the current user
-$sql = "SELECT id, title, description, status, due_date, created_at FROM tasks WHERE user_id = ? ORDER BY due_date ASC, created_at DESC";
+// Get user categories
+$categories = get_user_categories($conn, $_SESSION["id"]);
+
+// Build the SQL query with filters
+$sql = "SELECT t.id, t.title, t.description, t.status, t.due_date, t.created_at, t.category_id, 
+               c.name as category_name, c.color as category_color 
+        FROM tasks t 
+        LEFT JOIN categories c ON t.category_id = c.id 
+        WHERE t.user_id = ?";
+
+$params = [$_SESSION["id"]];
+$types = "i";
+
+// Add category filter if specified
+if (!empty($filter_category)) {
+    $sql .= " AND t.category_id = ?";
+    $params[] = $filter_category;
+    $types .= "i";
+}
+
+// Add status filter if specified
+if (!empty($filter_status)) {
+    $sql .= " AND t.status = ?";
+    $params[] = $filter_status;
+    $types .= "s";
+}
+
+// Add order by clause
+$sql .= " ORDER BY t.due_date ASC, t.created_at DESC";
 
 if ($stmt = $conn->prepare($sql)) {
     // Bind variables to the prepared statement as parameters
-    $stmt->bind_param("i", $param_user_id);
-    
-    // Set parameters
-    $param_user_id = $_SESSION["id"];
+    $stmt->bind_param($types, ...$params);
     
     // Attempt to execute the prepared statement
     if ($stmt->execute()) {
@@ -48,6 +74,59 @@ include "includes/header.php";
     </div>
     <div class="col-md-4 text-end">
         <a href="create.php" class="btn btn-primary">Create New Task</a>
+        <a href="categories.php" class="btn btn-outline-secondary ms-2">Manage Categories</a>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Filters</h5>
+                
+                <!-- Category Filter -->
+                <div class="mb-3">
+                    <h6>Category:</h6>
+                    <div class="category-filter">
+                        <a href="?<?php echo !empty($filter_status) ? 'status=' . $filter_status : ''; ?>" 
+                           class="btn <?php echo empty($filter_category) ? 'btn-primary' : 'btn-outline-primary'; ?>">
+                            All
+                        </a>
+                        <?php foreach ($categories as $category): ?>
+                            <a href="?category=<?php echo $category['id']; ?><?php echo !empty($filter_status) ? '&status=' . $filter_status : ''; ?>" 
+                               class="btn <?php echo $filter_category == $category['id'] ? 'btn-primary' : 'btn-outline-primary'; ?>">
+                                <span class="category-color-preview" style="background-color: <?php echo $category['color']; ?>"></span>
+                                <?php echo htmlspecialchars($category['name']); ?>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+                
+                <!-- Status Filter -->
+                <div>
+                    <h6>Status:</h6>
+                    <div class="category-filter">
+                        <a href="?<?php echo !empty($filter_category) ? 'category=' . $filter_category : ''; ?>" 
+                           class="btn <?php echo empty($filter_status) ? 'btn-primary' : 'btn-outline-primary'; ?>">
+                            All
+                        </a>
+                        <a href="?status=pending<?php echo !empty($filter_category) ? '&category=' . $filter_category : ''; ?>" 
+                           class="btn <?php echo $filter_status == 'pending' ? 'btn-warning' : 'btn-outline-warning'; ?>">
+                            Pending
+                        </a>
+                        <a href="?status=in_progress<?php echo !empty($filter_category) ? '&category=' . $filter_category : ''; ?>" 
+                           class="btn <?php echo $filter_status == 'in_progress' ? 'btn-primary' : 'btn-outline-primary'; ?>">
+                            In Progress
+                        </a>
+                        <a href="?status=completed<?php echo !empty($filter_category) ? '&category=' . $filter_category : ''; ?>" 
+                           class="btn <?php echo $filter_status == 'completed' ? 'btn-success' : 'btn-outline-success'; ?>">
+                            Completed
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -56,7 +135,13 @@ include "includes/header.php";
 <?php endif; ?>
 
 <?php if (empty($tasks)): ?>
-    <div class="alert alert-info">You don't have any tasks yet. Create one to get started!</div>
+    <div class="alert alert-info">
+        <?php if (!empty($filter_category) || !empty($filter_status)): ?>
+            No tasks match your filter criteria. <a href="read.php">Clear filters</a> to see all tasks.
+        <?php else: ?>
+            You don't have any tasks yet. <a href="create.php">Create one</a> to get started!
+        <?php endif; ?>
+    </div>
 <?php else: ?>
     <div class="row">
         <?php foreach ($tasks as $task): ?>
@@ -75,6 +160,14 @@ include "includes/header.php";
                         </div>
                     </div>
                     <div class="card-body">
+                        <?php if (!empty($task['category_name'])): ?>
+                            <div class="mb-2">
+                                <span class="category-badge" style="background-color: <?php echo $task['category_color']; ?>">
+                                    <?php echo htmlspecialchars($task['category_name']); ?>
+                                </span>
+                            </div>
+                        <?php endif; ?>
+                        
                         <p class="card-text"><?php echo nl2br(htmlspecialchars($task['description'])); ?></p>
                         <div class="d-flex justify-content-between">
                             <span class="badge bg-<?php echo ($task['status'] == 'pending') ? 'warning' : (($task['status'] == 'in_progress') ? 'primary' : 'success'); ?>">
