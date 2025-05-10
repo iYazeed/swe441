@@ -5,7 +5,7 @@ require_once "includes/functions.php";
 // Check if user is logged in
 redirect_if_not_logged_in();
 
-// Get all notifications for the user
+// Get all notifications for the users
 $notifications = get_user_notifications($conn, $_SESSION["id"], 50);
 
 include "includes/header.php";
