@@ -5,9 +5,15 @@ require_once "includes/functions.php";
 // Check if user is logged in
 redirect_if_not_logged_in();
 
+// Check database connection
+if ($conn->connect_error) {
+    log_error("Database connection failed: " . $conn->connect_error);
+    die("Connection failed: " . $conn->connect_error);
+}
+
 // Define variables and initialize with empty values
 $title = $description = $status = $due_date = "";
-$title_err = $description_err = $status_err = $due_date_err = "";
+$title_err = $description_err = $status_err = $due_date_err = $general_err = "";
 
 // Processing form data when form is submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -42,32 +48,37 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
     // Check input errors before inserting in database
     if (empty($title_err) && empty($status_err) && empty($due_date_err)) {
-        
-        // Prepare an insert statement
-        $sql = "INSERT INTO tasks (title, description, status, due_date, user_id) VALUES (?, ?, ?, ?, ?)";
-         
-        if ($stmt = $conn->prepare($sql)) {
-            // Bind variables to the prepared statement as parameters
-            $stmt->bind_param("ssssi", $param_title, $param_description, $param_status, $param_due_date, $param_user_id);
-            
-            // Set parameters
-            $param_title = $title;
-            $param_description = $description;
-            $param_status = $status;
-            $param_due_date = $due_date;
-            $param_user_id = $_SESSION["id"];
-            
-            // Attempt to execute the prepared statement
-            if ($stmt->execute()) {
-                // Redirect to tasks page
-                header("location: read.php");
-                exit();
-            } else {
-                echo "Oops! Something went wrong. Please try again later.";
-            }
+        try {
+            // Prepare an insert statement
+            $sql = "INSERT INTO tasks (title, description, status, due_date, user_id) VALUES (?, ?, ?, ?, ?)";
+             
+            if ($stmt = $conn->prepare($sql)) {
+                // Bind variables to the prepared statement as parameters
+                $stmt->bind_param("ssssi", $param_title, $param_description, $param_status, $param_due_date, $param_user_id);
+                
+                // Set parameters
+                $param_title = $title;
+                $param_description = $description;
+                $param_status = $status;
+                $param_due_date = $due_date;
+                $param_user_id = $_SESSION["id"];
+                
+                // Attempt to execute the prepared statement
+                if ($stmt->execute()) {
+                    // Redirect to tasks page
+                    header("location: read.php");
+                    exit();
+                } else {
+                    $general_err = "Database error: " . $conn->error;
+                }
 
-            // Close statement
-            $stmt->close();
+                // Close statement
+                $stmt->close();
+            } else {
+                $general_err = "Database preparation error: " . $conn->error;
+            }
+        } catch (Exception $e) {
+            $general_err = "An unexpected error occurred: " . $e->getMessage();
         }
     }
     
@@ -85,6 +96,9 @@ include "includes/header.php";
                 <h2 class="card-title">Create New Task</h2>
             </div>
             <div class="card-body">
+                <?php if (!empty($general_err)): ?>
+                    <div class="alert alert-danger mb-3"><?php echo $general_err; ?></div>
+                <?php endif; ?>
                 <form id="task-form" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
                     <div class="mb-3">
                         <label for="title" class="form-label">Title</label>
